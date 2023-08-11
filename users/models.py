@@ -1,17 +1,37 @@
 from django.db import models
-from django.contrib.auth.models import User
-from django.db.models.signals import post_save
-from django.dispatch import receiver
+from django.contrib.auth.models import User, BaseUserManager
 
+from utils.models import TimestampZone
 
-class Profile(models.Model):
-    user = models.OneToOneField(User, on_delete = models.CASCADE, primary_key = True)
-    nickname = models.CharField(max_length=128)
-    position = models.CharField(max_length=128)
-    subjects = models.CharField(max_length=128)
-    image = models.ImageField(upload_to = 'profile/', default = 'default.png')
+class CustomUserManager(BaseUserManager):
+    def create_user(self, nickname, username, password, **extra_fields):
+        if not nickname:
+            raise ValueError(_("You must provide an nickname"))
 
-@receiver(post_save, sender=User)
-def create_user_profile(sender, instance, created, **kwargs):
-    if created:
-        Profile.objects.create(user=instance)
+        user = self.model(
+            nickname=nickname,
+            username=username,
+            password=password,
+            # phone=extra_fields.pop("phone", None),
+            **extra_fields
+        )
+        user.set_password(password)
+        user.save()
+
+class CustomUser(TimestampZone):
+    user = models.BigAutoField(
+        primary_key=True,
+        unique=True,
+        editable=False,
+    )
+    username = models.CharField(max_length=45)
+    nickname = models.CharField(max_length=45, unique=True)
+    bio = models.TextField(max_length=256)
+
+    USERNAME_FIELD = "nickname"
+
+    class Meta:
+        db_table = "users"
+
+    def __str__(self):
+        return self.username

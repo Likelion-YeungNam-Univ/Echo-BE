@@ -2,11 +2,12 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
 from users.models import Profile
+from utils.models import TimestampZone
 
 # Create your models here.
 
 
-class Post(models.Model):
+class Post(TimestampZone):
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='posts')
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE, default=None)
     body = models.TextField()
@@ -23,24 +24,22 @@ class PostImage(models.Model):
     image = models.ImageField(upload_to="post/%Y/%m/%d")
 
 
-class Comment(models.Model):
+class Comment(TimestampZone):
     comment = models.TextField()
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE, default=None)
     author = models.ForeignKey(User, on_delete = models.CASCADE)
     post = models.ForeignKey(Post, related_name='comments', on_delete=models.CASCADE)
-    created_at = models.DateTimeField(default=timezone.now)
 
 
     class Meta:
         db_table = "comments"
 
 
-class ReComment(models.Model):
+class ReComment(TimestampZone):
     recomment = models.TextField()
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE, default=None)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     comment = models.ForeignKey(Comment, related_name='recomments', on_delete=models.CASCADE, default = '')
-    created_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
         db_table = "recomments"
