@@ -1,61 +1,61 @@
-from django.contrib.auth.models import User
-from rest_framework import generics, status
+# from django.contrib.auth.models import User
+# from rest_framework import generics, status
+# from rest_framework.response import Response
+
+# from django.shortcuts import redirect
+
+from rest_framework import status
+from django.contrib.auth import authenticate, get_user_model
+from rest_framework.viewsets import ModelViewSet
 from rest_framework.response import Response
-from rest_framework.views import APIView
+from rest_framework.decorators import action
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-from .serializers import RegisterSerializer, LoginSerializer, ProfileSerializer
-from .models import Profile
+from .serializers import UserSerializer, LoginUserSerializer
 
-from django.shortcuts import redirect
-
-class RegisterView(generics.CreateAPIView):
+User = get_user_model()
+class UserViewSet(ModelViewSet):
     queryset = User.objects.all()
-    serializer_class = RegisterSerializer
+    serializer_class = LoginUserSerializer
+    # {
+    #     "create" : UserSerializer,
+    #     "login" : LoginUserSerializer
+    # }
+    permission_classes_by_action = {
+        'list': [IsAuthenticated],
+        'retrieve': [IsAuthenticated],
+        'create': [AllowAny],
+        'update': [IsAuthenticated],
+        'destroy': [IsAuthenticated],
+    }
 
-
-class LoginView(generics.GenericAPIView):
-    serializer_class = LoginSerializer
-
-    def post(self, request):
-        serializer = self.get_serializer(data=request.data)
+    def create(self, request, *args, **kwargs):
+        reg_serializer = self.get_serializer(data = request.data) # json -> python
+        if reg_serializer.is_valid():
+            new_user = reg_serializer.save()
+            res = self.get_serializer(instance = new_user)
+            
+            return Response({"user": res}, status=status.HTTP_201_CREATED)
+        return Response(reg_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    @action(detail=False, methods=["post"])
+    def login(self, request):
+        serializer = LoginUserSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        token = serializer.validated_data
-        return Response({"token": token.key}, status=status.HTTP_200_OK)
+        nickname = serializer.validated_data.get("nickname")
+        password = serializer.validated_data.get("password")
 
-
-class ProfileView(generics.RetrieveAPIView):
-    queryset = Profile.objects.all()
-    serializer_class = ProfileSerializer
-    lookup_field = 'pk'
-
-
-class KakaoView(APIView):
-    def get(self, request):
-        kakao_api = "https://kauth.kakao.com/oauth/authorize?response_type=code"
-        redirect_uri = "http://10.58.2.143:8000/users/kakao/callback"
-        client_id = "ad3ae8475404821e34a7910b1aeff53d"
-
-        redirect_url = f"{kakao_api}&client_id={client_id}&redirect_uri={redirect_uri}"
-        return Response({"redirect_url": redirect_url}, status=status.HTTP_200_OK)
-
-class kakaoCallBackView(APIView):
-    def get(self, request):
-        data = {
-            "grant_type" : "authorization_code",
-            "client_id" : "ad3ae8475404821e34a7910b1aeff53d",
-            "redirection_uri" : "http://10.58.2.143:8000/users/kakao",
-            "code" : request.GET.get("code")
-        }
-
-        kakao_token_api = "https:kauth.kakao.com/oauth/token"
-        response = requests.post(kakao_token_api, data=data)
-        access_token = response.json().get("access_token")
+        if not nickname or not password:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
         
-        kakao_user_api = "https://kapi.kakao.com/v2/user/me"
-        header = {"Authorization":f"Bearer ${access_token}"}
-        user_infomation = requests.get(kakao_user_api, headers=header).json()
-        
-        return Response({"access_token": access_token})
-    
-    
-                                                            
+        user = authenticate(nickname=nickname, password=password)
+
+        if user:
+            token = TokenObtainPairSerializer.get_token(user)
+
+            return Response({
+                "access" : str(token.access_token),
+                "refresh" : str(token),
+                }, status.HTTP_200_OK)
+        return Response(status=status.HTTP_401_UNAUTHORIZED)

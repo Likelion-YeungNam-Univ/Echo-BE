@@ -62,6 +62,7 @@ INSTALLED_APPS = [
 
     # myapps
     'users',
+    'utils',
 ]
 
 MIDDLEWARE = [
@@ -127,7 +128,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # 프로젝트 인증 방식으로 토큰 사용할 것임을 정의
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES' : [
-        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
 }
 
