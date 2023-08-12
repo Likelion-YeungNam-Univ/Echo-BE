@@ -17,11 +17,6 @@ from .serializers import UserSerializer, LoginUserSerializer
 User = get_user_model()
 class UserViewSet(ModelViewSet):
     queryset = User.objects.all()
-    serializer_class = LoginUserSerializer
-    # {
-    #     "create" : UserSerializer,
-    #     "login" : LoginUserSerializer
-    # }
     permission_classes_by_action = {
         'list': [IsAuthenticated],
         'retrieve': [IsAuthenticated],
@@ -29,6 +24,13 @@ class UserViewSet(ModelViewSet):
         'update': [IsAuthenticated],
         'destroy': [IsAuthenticated],
     }
+    def get_serializer(self, *args, **kwargs):
+        if self.action == 'login':
+            serializer_class = LoginUserSerializer
+        else :
+            serializer_class = UserSerializer
+        return serializer_class(*args, **kwargs)
+
 
     def create(self, request, *args, **kwargs):
         reg_serializer = self.get_serializer(data = request.data) # json -> python
