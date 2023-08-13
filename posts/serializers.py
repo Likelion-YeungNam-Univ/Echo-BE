@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from .models import Post, Comment, ReComment, PostImage
-from users.models import Profile
-from users.serializers import ProfileSerializer
+from users.models import CustomUser
+from users.serializers import UserSerializer
 from django.contrib.auth.models import User
 
 class PostImageSerializer(serializers.ModelSerializer):
@@ -10,14 +10,14 @@ class PostImageSerializer(serializers.ModelSerializer):
         fields = ("image")
 
 class ReCommentSerializer(serializers.ModelSerializer):
-    profile = ProfileSerializer(read_only=True)
+    profile = UserSerializer(read_only=True)
 
     class Meta:
         model = ReComment
         fields = ("pk", "recomment", "profile", "created_at")
 
 class CommentSerializer(serializers.ModelSerializer):
-    profile = ProfileSerializer(read_only=True)
+    profile = UserSerializer(read_only=True)
     recomments = ReCommentSerializer(many=True, read_only=True)
 
     class Meta:
@@ -25,7 +25,7 @@ class CommentSerializer(serializers.ModelSerializer):
         fields = ("pk", "comment", "profile", "created_at", "recomments")
 
 class PostSerializer(serializers.ModelSerializer):
-    profile = ProfileSerializer(read_only=True)
+    profile = UserSerializer(read_only=True)
     comments = CommentSerializer(many=True, read_only=True)
     images = PostImageSerializer(many=True, read_only=True)
 

@@ -5,7 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 
-from users.models import Profile
+from users.models import CustomUser
 from .models import Post, Comment, ReComment
 from .permissions import CustomReadOnly
 from .serializers import PostSerializer, PostCreateSerializer, CommentSerializer, CommentCreateSerializer, ReCommentSerializer, ReCommentCreateSerializer
@@ -23,7 +23,7 @@ class PostViewSet(viewsets.ModelViewSet):
         return PostCreateSerializer
     
     def perform_create(self, serializer):
-        profile = Profile.objects.get(user=self.request.user)
+        profile = CustomUser.objects.get(user=self.request.user)
         serializer.save(author=self.request.user, profile=profile)
 
 
@@ -49,7 +49,7 @@ class CommentViewSet(viewsets.ModelViewSet):
         return CommentCreateSerializer
     
     def perform_create(self, serializer):
-        profile = Profile.objects.get(user=self.request.user)
+        profile = CustomUser.objects.get(user=self.request.user)
         serializer.save(author=self.request.user, profile=profile)
 
 
@@ -63,7 +63,7 @@ class ReCommentViewSet(viewsets.ModelViewSet):
         return ReCommentCreateSerializer
     
     def perform_create(self, serializer):
-        profile = Profile.objects.get(user=self.request.user)
+        profile = CustomUser.objects.get(user=self.request.user)
         serializer.save(author=self.request.user, profile=profile)
 
 

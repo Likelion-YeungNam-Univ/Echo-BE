@@ -41,7 +41,7 @@ class UserViewSet(ModelViewSet):
             return Response({"user": res}, status=status.HTTP_201_CREATED)
         return Response(reg_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-    @action(detail=False, methods=["post"])
+    @action(detail=False, methods=["post"], url_name='login')
     def login(self, request):
         serializer = LoginUserSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -55,7 +55,6 @@ class UserViewSet(ModelViewSet):
 
         if user:
             token = TokenObtainPairSerializer.get_token(user)
-
             return Response({
                 "access" : str(token.access_token),
                 "refresh" : str(token),
